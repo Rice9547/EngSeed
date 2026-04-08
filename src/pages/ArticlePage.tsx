@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { articles } from '../data/articles'
+import { fetchArticle } from '../data/api'
+import type { Article } from '../data/types'
 import VocabularyStep from '../components/VocabularyStep'
 import ReadingStep from '../components/ReadingStep'
 import QuestionsStep from '../components/QuestionsStep'
 import DiscussionStep from '../components/DiscussionStep'
 
-const steps = ['Vocabulary', 'Reading', 'Questions', 'Discussion'] as const
-type Step = (typeof steps)[number]
+const allSteps = ['Vocabulary', 'Reading', 'Questions', 'Discussion'] as const
+type Step = (typeof allSteps)[number]
 
 const stepIcons: Record<Step, string> = {
   Vocabulary: '📝',
@@ -19,7 +20,18 @@ const stepIcons: Record<Step, string> = {
 export default function ArticlePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [article, setArticle] = useState<Article | null>(null)
+  const [loading, setLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState<Step>('Vocabulary')
+
+  useEffect(() => {
+    if (!id) return
+    setLoading(true)
+    fetchArticle(id)
+      .then(setArticle)
+      .catch(() => setArticle(null))
+      .finally(() => setLoading(false))
+  }, [id])
 
   useEffect(() => {
     speechSynthesis.cancel()
@@ -29,7 +41,14 @@ export default function ArticlePage() {
     return () => { speechSynthesis.cancel() }
   }, [])
 
-  const article = articles.find(a => a.id === id)
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-400">Loading...</p>
+      </div>
+    )
+  }
+
   if (!article) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -42,6 +61,11 @@ export default function ArticlePage() {
       </div>
     )
   }
+
+  // Skip Questions step if no multiple-choice questions
+  const steps = allSteps.filter(s =>
+    s !== 'Questions' || (article.questions && article.questions.length > 0)
+  )
 
   const currentIndex = steps.indexOf(currentStep)
 

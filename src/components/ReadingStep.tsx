@@ -93,7 +93,7 @@ export default function ReadingStep({ article }: Props) {
 
       {/* Article image */}
       <img
-        src={article.imageUrl}
+        src={article.image_url}
         alt={article.title}
         className="w-full h-48 object-cover rounded-xl mb-4"
       />

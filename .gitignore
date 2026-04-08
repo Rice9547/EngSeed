@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
 
 # Article data (private - copy articles.sample.ts to articles.ts)
 src/data/articles.ts

@@ -19,13 +19,26 @@ export interface DiscussionPrompt {
   question: string;
 }
 
+export interface ArticleListItem {
+  id: string;
+  title: string;
+  category: string;
+  level: string;
+  date: string;
+  image_url: string;
+  summary: string;
+  vocabulary_count: number;
+  question_count: number;
+  discussion_count: number;
+}
+
 export interface Article {
   id: string;
   title: string;
   category: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
+  level: string;
   date: string;
-  imageUrl: string;
+  image_url: string;
   summary: string;
   vocabulary: VocabularyItem[];
   paragraphs: string[];
