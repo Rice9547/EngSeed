@@ -6,9 +6,15 @@ const levels = ['All', 'Beginner', 'Intermediate', 'Advanced'] as const
 const categories = ['All', ...new Set(articles.map(a => a.category))] as const
 
 const levelColors: Record<string, string> = {
-  Beginner: 'bg-green-100 text-green-700',
-  Intermediate: 'bg-blue-100 text-blue-700',
-  Advanced: 'bg-purple-100 text-purple-700',
+  Beginner: 'bg-emerald-100 text-emerald-700',
+  Intermediate: 'bg-amber-100 text-amber-700',
+  Advanced: 'bg-orange-100 text-orange-700',
+}
+
+const levelIcons: Record<string, string> = {
+  Beginner: '🌱',
+  Intermediate: '🌿',
+  Advanced: '🌳',
 }
 
 export default function HomePage() {
@@ -24,13 +30,13 @@ export default function HomePage() {
   return (
     <div className="safe-bottom">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-primary text-white px-4 py-4">
+      <header className="sticky top-0 z-10 bg-gradient-to-r from-primary-dark to-primary text-white px-4 py-4">
         <h1 className="text-xl font-bold">🌱 EngSeed</h1>
-        <p className="text-sm text-indigo-200 mt-0.5">Grow your English, one day at a time</p>
+        <p className="text-sm text-emerald-200 mt-0.5">Grow your English, one day at a time</p>
       </header>
 
       {/* Filters */}
-      <div className="px-4 pt-3 pb-2 space-y-2 bg-white border-b border-gray-100">
+      <div className="px-4 pt-3 pb-2 space-y-2 bg-soil border-b border-stone-200">
         {/* Level filter */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {levels.map(level => (
@@ -40,7 +46,7 @@ export default function HomePage() {
               className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 selectedLevel === level
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                  : 'bg-white text-bark active:bg-stone-100'
               }`}
             >
               {level}
@@ -56,7 +62,7 @@ export default function HomePage() {
               className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 selectedCategory === cat
                   ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-600 active:bg-gray-200'
+                  : 'bg-white text-bark active:bg-stone-100'
               }`}
             >
               {cat}
@@ -93,7 +99,7 @@ function ArticleCard({ article }: { article: Article }) {
       <div className="p-3">
         <div className="flex items-center gap-2 mb-1.5">
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${levelColors[article.level]}`}>
-            {article.level}
+            {levelIcons[article.level]} {article.level}
           </span>
           <span className="text-xs text-gray-400">{article.category}</span>
           <span className="text-xs text-gray-400 ml-auto">{article.date}</span>
