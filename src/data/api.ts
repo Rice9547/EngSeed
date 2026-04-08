@@ -87,3 +87,22 @@ export async function markStepComplete(articleId: string, step: string): Promise
     body: JSON.stringify({ article_id: articleId, step }),
   });
 }
+
+// ── Discussion Notes ──
+
+export interface NoteResponse {
+  prompt_id: number;
+  content: string;
+}
+
+export async function fetchNotes(articleId: string): Promise<NoteResponse[]> {
+  return fetchJSON(`/api/notes/${articleId}`);
+}
+
+export async function saveNote(articleId: string, promptId: number, content: string): Promise<void> {
+  await fetchJSON('/api/notes', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ article_id: articleId, prompt_id: promptId, content }),
+  });
+}

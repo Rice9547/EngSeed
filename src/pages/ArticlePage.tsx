@@ -151,7 +151,7 @@ export default function ArticlePage() {
         {currentStep === 'Vocabulary' && <VocabularyStep vocabulary={article.vocabulary} />}
         {currentStep === 'Reading' && <ReadingStep article={article} />}
         {currentStep === 'Questions' && <QuestionsStep questions={article.questions} />}
-        {currentStep === 'Discussion' && <DiscussionStep prompts={article.discussion} />}
+        {currentStep === 'Discussion' && <DiscussionStep articleId={article.id} prompts={article.discussion} />}
       </div>
 
       {/* Navigation */}

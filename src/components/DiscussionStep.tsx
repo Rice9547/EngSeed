@@ -1,13 +1,41 @@
-import { useState } from 'react'
-import type { DiscussionPrompt } from '../data/articles'
+import { useState, useEffect, useRef } from 'react'
+import type { DiscussionPrompt } from '../data/types'
+import { useAuth } from '../contexts/AuthContext'
+import { fetchNotes, saveNote } from '../data/api'
 
 interface Props {
+  articleId: string
   prompts: DiscussionPrompt[]
 }
 
-export default function DiscussionStep({ prompts }: Props) {
+export default function DiscussionStep({ articleId, prompts }: Props) {
+  const { username } = useAuth()
   const [notes, setNotes] = useState<Record<number, string>>({})
   const [expandedId, setExpandedId] = useState<number | null>(prompts[0]?.id ?? null)
+  const saveTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({})
+
+  // Load saved notes
+  useEffect(() => {
+    if (!username) return
+    fetchNotes(articleId)
+      .then(list => {
+        const map: Record<number, string> = {}
+        for (const n of list) map[n.prompt_id] = n.content
+        setNotes(map)
+      })
+      .catch(() => {})
+  }, [articleId, username])
+
+  const updateNote = (promptId: number, content: string) => {
+    setNotes(prev => ({ ...prev, [promptId]: content }))
+
+    // Auto-save with debounce (only when logged in)
+    if (!username) return
+    if (saveTimers.current[promptId]) clearTimeout(saveTimers.current[promptId])
+    saveTimers.current[promptId] = setTimeout(() => {
+      saveNote(articleId, promptId, content).catch(() => {})
+    }, 1000)
+  }
 
   return (
     <div>
@@ -28,14 +56,17 @@ export default function DiscussionStep({ prompts }: Props) {
               <p className="font-medium text-gray-800 text-sm leading-relaxed">
                 {prompt.question}
               </p>
+              {notes[prompt.id] && (
+                <span className="text-xs text-primary ml-auto shrink-0">✎</span>
+              )}
             </button>
 
             {expandedId === prompt.id && (
               <div className="px-4 pb-4">
                 <textarea
                   value={notes[prompt.id] || ''}
-                  onChange={(e) => setNotes(prev => ({ ...prev, [prompt.id]: e.target.value }))}
-                  placeholder="Write your answer here..."
+                  onChange={(e) => updateNote(prompt.id, e.target.value)}
+                  placeholder={username ? "Write your answer here... (auto-saved)" : "Write your answer here..."}
                   className="w-full h-32 p-3 rounded-lg border border-gray-200 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
                 />
                 <div className="flex justify-between items-center mt-2">
