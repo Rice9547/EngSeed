@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { fetchArticle, fetchArticleCompletion, markStepComplete } from '../data/api'
+import { useAuth } from '../contexts/AuthContext'
 import type { Article } from '../data/types'
 import VocabularyStep from '../components/VocabularyStep'
 import ReadingStep from '../components/ReadingStep'
@@ -20,6 +21,7 @@ const stepIcons: Record<Step, string> = {
 export default function ArticlePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { username } = useAuth()
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState<Step>('Vocabulary')
@@ -32,13 +34,15 @@ export default function ArticlePage() {
       .then(setArticle)
       .catch(() => setArticle(null))
       .finally(() => setLoading(false))
-    fetchArticleCompletion(id)
-      .then(c => setCompletedSteps(new Set(c.steps)))
-      .catch(() => {})
-  }, [id])
+    if (username) {
+      fetchArticleCompletion(id)
+        .then(c => setCompletedSteps(new Set(c.steps)))
+        .catch(() => {})
+    }
+  }, [id, username])
 
   const completeStep = (step: string) => {
-    if (!id || completedSteps.has(step)) return
+    if (!id || !username || completedSteps.has(step)) return
     setCompletedSteps(prev => new Set([...prev, step]))
     markStepComplete(id, step).catch(() => {})
   }

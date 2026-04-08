@@ -32,14 +32,16 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchCategories().then(setCategories).catch(() => {})
-    fetchCompletions()
-      .then(list => {
-        const map: Record<string, string[]> = {}
-        for (const c of list) map[c.article_id] = c.steps
-        setCompletions(map)
-      })
-      .catch(() => {})
-  }, [])
+    if (username) {
+      fetchCompletions()
+        .then(list => {
+          const map: Record<string, string[]> = {}
+          for (const c of list) map[c.article_id] = c.steps
+          setCompletions(map)
+        })
+        .catch(() => {})
+    }
+  }, [username])
 
   useEffect(() => {
     setLoading(true)
@@ -63,12 +65,18 @@ export default function HomePage() {
             <h1 className="text-xl font-bold">🌱 EngSeed</h1>
             <p className="text-sm text-emerald-200 mt-0.5">Grow your English, one day at a time</p>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-emerald-200">{username}</p>
-            <button onClick={logout} className="text-xs text-emerald-300 active:text-white mt-0.5">
-              Logout
-            </button>
-          </div>
+          {username ? (
+            <div className="text-right">
+              <p className="text-xs text-emerald-200">{username}</p>
+              <button onClick={logout} className="text-xs text-emerald-300 active:text-white mt-0.5">
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" className="text-sm bg-white/20 px-3 py-1.5 rounded-full active:bg-white/30">
+              Login
+            </Link>
+          )}
         </div>
       </header>
 
