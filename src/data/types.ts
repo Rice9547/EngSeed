@@ -5,6 +5,17 @@ export interface VocabularyItem {
   meaning: string;
   meaningZh: string;
   example: string;
+  soundUrl?: string;
+}
+
+export interface Sentence {
+  text: string;
+  soundUrl?: string;
+}
+
+export interface Paragraph {
+  text: string;
+  sentences: Sentence[];
 }
 
 export interface Question {
@@ -41,7 +52,7 @@ export interface Article {
   image_url: string;
   summary: string;
   vocabulary: VocabularyItem[];
-  paragraphs: string[];
+  paragraphs: Paragraph[];
   questions: Question[];
   discussion: DiscussionPrompt[];
 }

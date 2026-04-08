@@ -23,8 +23,8 @@ export const articles: Article[] = [
       },
     ],
     paragraphs: [
-      'This is the first paragraph of the article.',
-      'This is the second paragraph with more details.',
+      { text: 'This is the first paragraph of the article.', sentences: [{ text: 'This is the first paragraph of the article.' }] },
+      { text: 'This is the second paragraph with more details.', sentences: [{ text: 'This is the second paragraph with more details.' }] },
     ],
     questions: [
       {

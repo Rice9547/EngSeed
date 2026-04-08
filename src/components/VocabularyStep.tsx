@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { VocabularyItem } from '../data/articles'
+import type { VocabularyItem } from '../data/types'
+import { playAudio } from '../utils/audio'
 
 interface Props {
   vocabulary: VocabularyItem[]
@@ -21,13 +22,6 @@ export default function VocabularyStep({ vocabulary }: Props) {
 function VocabCard({ item, index }: { item: VocabularyItem; index: number }) {
   const [expanded, setExpanded] = useState(false)
 
-  const speak = (text: string) => {
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US'
-    utterance.rate = 0.85
-    speechSynthesis.speak(utterance)
-  }
-
   return (
     <div
       className="bg-white rounded-xl p-4 shadow-sm"
@@ -45,7 +39,7 @@ function VocabCard({ item, index }: { item: VocabularyItem; index: number }) {
         <button
           onClick={(e) => {
             e.stopPropagation()
-            speak(item.word)
+            playAudio(item.word, item.soundUrl)
           }}
           className="p-2 rounded-full active:bg-gray-100"
           aria-label={`Listen to ${item.word}`}
@@ -58,14 +52,14 @@ function VocabCard({ item, index }: { item: VocabularyItem; index: number }) {
         <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
           <div>
             <p className="text-sm text-gray-700">{item.meaning}</p>
-            <p className="text-sm text-primary-dark mt-1">{item.meaningZh}</p>
+            {item.meaningZh && <p className="text-sm text-primary-dark mt-1">{item.meaningZh}</p>}
           </div>
           <div className="bg-surface rounded-lg p-3">
             <p className="text-sm text-gray-600 italic">"{item.example}"</p>
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                speak(item.example)
+                playAudio(item.example)
               }}
               className="text-xs text-primary mt-1 active:text-primary-dark"
             >
@@ -75,7 +69,7 @@ function VocabCard({ item, index }: { item: VocabularyItem; index: number }) {
         </div>
       )}
 
-      {!expanded && (
+      {!expanded && item.meaningZh && (
         <p className="text-sm text-primary-dark mt-1">{item.meaningZh}</p>
       )}
     </div>

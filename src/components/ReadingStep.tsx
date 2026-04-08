@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import type { Article } from '../data/articles'
+import { useState, useCallback, useRef } from 'react'
+import type { Article, Paragraph } from '../data/types'
 
 interface Props {
   article: Article
@@ -9,56 +9,73 @@ export default function ReadingStep({ article }: Props) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentParagraph, setCurrentParagraph] = useState(-1)
   const [fontSize, setFontSize] = useState(16)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  const speakAll = useCallback(() => {
+  const stopAll = () => {
     speechSynthesis.cancel()
-    setIsPlaying(true)
-
-    const paragraphs = article.paragraphs
-    let index = 0
-
-    const speakNext = () => {
-      if (index >= paragraphs.length) {
-        setIsPlaying(false)
-        setCurrentParagraph(-1)
-        return
-      }
-      setCurrentParagraph(index)
-      const utterance = new SpeechSynthesisUtterance(paragraphs[index])
-      utterance.lang = 'en-US'
-      utterance.rate = 0.85
-      utterance.onend = () => {
-        index++
-        speakNext()
-      }
-      utterance.onerror = () => {
-        setIsPlaying(false)
-        setCurrentParagraph(-1)
-      }
-      speechSynthesis.speak(utterance)
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
     }
-
-    speakNext()
-  }, [article.paragraphs])
-
-  const stopSpeaking = () => {
-    speechSynthesis.cancel()
     setIsPlaying(false)
     setCurrentParagraph(-1)
   }
 
-  const speakParagraph = (text: string, index: number) => {
-    speechSynthesis.cancel()
+  const playParagraphAudio = useCallback((para: Paragraph): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      // Collect all sentence audio URLs for this paragraph
+      const audioUrls = para.sentences
+        .map(s => s.soundUrl)
+        .filter((url): url is string => !!url)
+
+      if (audioUrls.length > 0) {
+        // Play sentence audios sequentially
+        let i = 0
+        const playNext = () => {
+          if (i >= audioUrls.length) {
+            resolve()
+            return
+          }
+          const audio = new Audio(audioUrls[i])
+          audioRef.current = audio
+          audio.onended = () => { i++; playNext() }
+          audio.onerror = () => { i++; playNext() }
+          audio.play().catch(() => { i++; playNext() })
+        }
+        playNext()
+      } else {
+        // Fallback to TTS
+        const utterance = new SpeechSynthesisUtterance(para.text)
+        utterance.lang = 'en-US'
+        utterance.rate = 0.85
+        utterance.onend = () => resolve()
+        utterance.onerror = () => resolve()
+        speechSynthesis.speak(utterance)
+      }
+    })
+  }, [])
+
+  const playAll = useCallback(async () => {
+    stopAll()
+    setIsPlaying(true)
+
+    for (let i = 0; i < article.paragraphs.length; i++) {
+      setCurrentParagraph(i)
+      await playParagraphAudio(article.paragraphs[i])
+    }
+
+    setIsPlaying(false)
+    setCurrentParagraph(-1)
+  }, [article.paragraphs, playParagraphAudio])
+
+  const playOne = (para: Paragraph, index: number) => {
+    stopAll()
     setIsPlaying(true)
     setCurrentParagraph(index)
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US'
-    utterance.rate = 0.85
-    utterance.onend = () => {
+    playParagraphAudio(para).then(() => {
       setIsPlaying(false)
       setCurrentParagraph(-1)
-    }
-    speechSynthesis.speak(utterance)
+    })
   }
 
   return (
@@ -66,7 +83,7 @@ export default function ReadingStep({ article }: Props) {
       {/* Controls */}
       <div className="flex items-center gap-3 mb-4">
         <button
-          onClick={isPlaying ? stopSpeaking : speakAll}
+          onClick={isPlaying ? stopAll : playAll}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm ${
             isPlaying
               ? 'bg-red-50 text-red-600 active:bg-red-100'
@@ -100,17 +117,17 @@ export default function ReadingStep({ article }: Props) {
 
       {/* Article content */}
       <div className="space-y-4" style={{ fontSize: `${fontSize}px` }}>
-        {article.paragraphs.map((paragraph, i) => (
+        {article.paragraphs.map((para, i) => (
           <p
             key={i}
-            onClick={() => speakParagraph(paragraph, i)}
+            onClick={() => playOne(para, i)}
             className={`leading-relaxed transition-colors cursor-pointer rounded-lg px-2 py-1 -mx-2 ${
               currentParagraph === i
                 ? 'bg-primary/10 text-primary-dark'
                 : 'text-gray-700 active:bg-gray-50'
             }`}
           >
-            {paragraph}
+            {para.text}
           </p>
         ))}
       </div>
