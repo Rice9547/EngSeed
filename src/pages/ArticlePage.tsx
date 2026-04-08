@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { articles } from '../data/articles'
 import VocabularyStep from '../components/VocabularyStep'
@@ -20,6 +20,14 @@ export default function ArticlePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState<Step>('Vocabulary')
+
+  useEffect(() => {
+    speechSynthesis.cancel()
+  }, [currentStep])
+
+  useEffect(() => {
+    return () => { speechSynthesis.cancel() }
+  }, [])
 
   const article = articles.find(a => a.id === id)
   if (!article) {
