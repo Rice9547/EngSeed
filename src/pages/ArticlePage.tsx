@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchArticle } from '../data/api'
+import { fetchArticle, fetchArticleCompletion, markStepComplete } from '../data/api'
 import type { Article } from '../data/types'
 import VocabularyStep from '../components/VocabularyStep'
 import ReadingStep from '../components/ReadingStep'
@@ -23,6 +23,7 @@ export default function ArticlePage() {
   const [article, setArticle] = useState<Article | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState<Step>('Vocabulary')
+  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!id) return
@@ -31,7 +32,16 @@ export default function ArticlePage() {
       .then(setArticle)
       .catch(() => setArticle(null))
       .finally(() => setLoading(false))
+    fetchArticleCompletion(id)
+      .then(c => setCompletedSteps(new Set(c.steps)))
+      .catch(() => {})
   }, [id])
+
+  const completeStep = (step: string) => {
+    if (!id || completedSteps.has(step)) return
+    setCompletedSteps(prev => new Set([...prev, step]))
+    markStepComplete(id, step).catch(() => {})
+  }
 
   useEffect(() => {
     speechSynthesis.cancel()
@@ -70,6 +80,8 @@ export default function ArticlePage() {
   const currentIndex = steps.indexOf(currentStep)
 
   const goNext = () => {
+    // Mark current step complete when moving forward
+    completeStep(currentStep.toLowerCase())
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1])
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -118,7 +130,9 @@ export default function ArticlePage() {
                     : 'text-gray-400'
               }`}
             >
-              <span className="block text-base mb-0.5">{stepIcons[step]}</span>
+              <span className="block text-base mb-0.5">
+                {completedSteps.has(step.toLowerCase()) ? '✅' : stepIcons[step]}
+              </span>
               {step}
               {currentStep === step && (
                 <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary rounded-full" />
@@ -155,7 +169,10 @@ export default function ArticlePage() {
           </button>
         ) : (
           <button
-            onClick={() => navigate('/')}
+            onClick={() => {
+              completeStep(currentStep.toLowerCase())
+              navigate('/')
+            }}
             className="flex-1 py-3 rounded-xl bg-green-500 text-white font-medium active:bg-green-600"
           >
             ✓ Complete
